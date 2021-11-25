@@ -1,0 +1,48 @@
+version: '3.2'
+services:
+
+  mariadb:
+    build: ./docker_files/
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - GALERA_NEW_CLUSTER=1
+    ulimits:
+      nofile:
+        soft: 10000
+        hard: 20000
+    volumes:
+      - mariadb_volume:/var/lib/mysql
+      - ./docker_files/node1.cnf:/etc/mysql/conf.d/galera.cnf
+      - ./docker_files/db:/docker-entrypoint-initdb.d/:rw
+    networks:
+      static-network:
+        ipv4_address: 10.1.0.2
+        aliases:
+          - mariadb
+
+  mariadb2:
+    build: ./docker_files/
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=1
+    depends_on:
+      - mariadb
+    volumes:
+      - mariadb2_volume:/var/lib/mysql
+      - ./docker_files/node2.cnf:/etc/mysql/conf.d/galera.cnf
+    networks:
+      static-network:
+        ipv4_address: 10.1.0.3
+        aliases:
+          - mariadb2
+
+
+networks:
+  static-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.1.0.0/16
+
+volumes:
+  mariadb_volume:
+  mariadb2_volume:
